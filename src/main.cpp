@@ -11,16 +11,17 @@
 
 #include "stm32f4xx.h"
 #include "LCD.h"
+#include <stdlib.h>
 
-			
+#define ARR_VALUE 640
+#define PSC_VALUE 65535
+
+char counter_value[5];
+uint64_t  count = 0;
 
 int main(void)
 {
-	custom_drivers::LCD lcd;
-	lcd.enable_port(GPIOD);
-	lcd.enable_port(GPIOC);
-	lcd.initialize();
-	lcd.clear();
+
 
 	//SET FLASH MEMORY LATENCY AND ENABLE PREFETCH
 	FLASH->ACR &= ~FLASH_ACR_LATENCY;
@@ -59,18 +60,44 @@ int main(void)
 	//check to confirm PLL being used
 	while(!(RCC->CFGR & RCC_CFGR_SWS_PLL )){}
 
+	custom_drivers::LCD lcd;
+	lcd.enable_port(GPIOD);
+	lcd.enable_port(GPIOC);
+	lcd.initialize();
+	lcd.clear();
 
-	char info[] = "  setup complete";
+	char info[] = "  complete";
 	lcd.newline();
 	lcd.send_string(info);
 
+	//Enable TIM2 clock
+	RCC->APB1ENR |= RCC_APB1ENR_TIM5EN;
+	//SET PRESCALER
+	TIM5->PSC = PSC_VALUE;
+	//set ARR VALUE
+	TIM5->ARR = ARR_VALUE;
+	//Initiate update event
+	TIM5->EGR |= TIM_EGR_UG;
+	//Enable counter
+	TIM5->CR1 |= TIM_CR1_CEN;
 
 
 
+	char space[] = "      ";
+
+	while(1){
 
 
 
+		if(TIM5->SR & TIM_SR_UIF){
+			TIM5->SR &= ~TIM_SR_UIF;
+			count++;
+			itoa(count,counter_value,10);
+			lcd.clear();
+			lcd.send_string(space);
+			lcd.send_string(counter_value);
 
 
-	for(;;);
+		}
+	}
 }
