@@ -70,7 +70,7 @@ int main(void)
 	lcd.newline();
 	lcd.send_string(info);
 
-	//Enable TIM2 clock
+	//Enable TIM5 clock
 	RCC->APB1ENR |= RCC_APB1ENR_TIM5EN;
 	//SET PRESCALER
 	TIM5->PSC = PSC_VALUE;
