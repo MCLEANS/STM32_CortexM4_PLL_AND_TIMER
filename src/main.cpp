@@ -19,6 +19,24 @@
 char counter_value[5];
 uint64_t  count = 0;
 
+custom_drivers::LCD lcd;
+char space[] = "      ";
+
+
+extern "C" void TIM3_IRQHandler(void){
+	if(TIM3->SR & TIM_SR_UIF){
+					TIM3->SR &= ~TIM_SR_UIF;
+					count++;
+					itoa(count,counter_value,10);
+					lcd.clear();
+					lcd.send_string(space);
+					lcd.send_string(counter_value);
+
+
+				}
+
+}
+
 int main(void)
 {
 
@@ -60,7 +78,7 @@ int main(void)
 	//check to confirm PLL being used
 	while(!(RCC->CFGR & RCC_CFGR_SWS_PLL )){}
 
-	custom_drivers::LCD lcd;
+
 	lcd.enable_port(GPIOD);
 	lcd.enable_port(GPIOC);
 	lcd.initialize();
@@ -70,34 +88,44 @@ int main(void)
 	lcd.newline();
 	lcd.send_string(info);
 
+	for(int i = 0; i<10000;i++);
+
 	//Enable TIM5 clock
-	RCC->APB1ENR |= RCC_APB1ENR_TIM5EN;
+	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+
+
+
+
 	//SET PRESCALER
-	TIM5->PSC = PSC_VALUE;
+	TIM3->PSC = PSC_VALUE;
 	//set ARR VALUE
-	TIM5->ARR = ARR_VALUE;
+	TIM3->ARR = ARR_VALUE;
 	//Initiate update event
-	TIM5->EGR |= TIM_EGR_UG;
+	TIM3->EGR |= TIM_EGR_UG;
+	//Enable update interrupt
+	TIM3->DIER |= TIM_DIER_UIE;
+	//only timer overflow generates update event
+	TIM3->CR1 |= TIM_CR1_URS;
 	//Enable counter
-	TIM5->CR1 |= TIM_CR1_CEN;
+	TIM3->CR1 |= TIM_CR1_CEN;
+
+	//set NVIC priority
+	NVIC_SetPriority(TIM3_IRQn,0x03);
+		//enable NVIC
+	NVIC_EnableIRQ(TIM3_IRQn);
 
 
 
-	char space[] = "      ";
+
+		lcd.clear();
+
+
+
 
 	while(1){
 
 
 
-		if(TIM5->SR & TIM_SR_UIF){
-			TIM5->SR &= ~TIM_SR_UIF;
-			count++;
-			itoa(count,counter_value,10);
-			lcd.clear();
-			lcd.send_string(space);
-			lcd.send_string(counter_value);
 
-
-		}
 	}
 }
