@@ -17,7 +17,10 @@
 #define PSC_VALUE 65535
 
 char counter_value[5];
-uint64_t  count = 0;
+
+int  count = 0;
+
+
 
 custom_drivers::LCD lcd;
 char space[] = "      ";
@@ -27,6 +30,7 @@ extern "C" void TIM3_IRQHandler(void){
 	if(TIM3->SR & TIM_SR_UIF){
 					TIM3->SR &= ~TIM_SR_UIF;
 					count++;
+
 					itoa(count,counter_value,10);
 					lcd.clear();
 					lcd.send_string(space);
@@ -88,7 +92,7 @@ int main(void)
 	lcd.newline();
 	lcd.send_string(info);
 
-	for(int i = 0; i<10000;i++);
+	for(int  i = 0; i<10000;i++);
 
 	//Enable TIM5 clock
 	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
